@@ -1,9 +1,7 @@
 use starknet::ContractAddress;
 #[starknet::interface]
 pub trait IStake<TContractState> {
-    fn stake_token(ref self: TContractState, amount: u256, time: u256) -> bool;
-    fn cast_vote(ref self: TContractState, proposal_id: u256, decision: bool) -> bool;
-    fn register_proposal(ref self: TContractState, proposal_title: felt252,) -> u256;
+    fn stake_token(ref self: TContractState, amount: u256) -> bool;
 }
 
 #[starknet::interface]
@@ -26,22 +24,14 @@ pub mod Stake {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, stake_token_erc20_address: ContractAddress) {
-        self.stake_token_address.write(stake_token_erc20_address)
+    fn constructor(ref self: ContractState, stake_token_stark_addrs: ContractAddress) {
+        self.stake_token_address.write(stake_token_stark_addrs)
     }
 
     #[abi(embed_v0)]
     impl StakeImpl of IStake<ContractState> {
-        fn stake_token(ref self: ContractState, amount: u256, time: u256) -> bool {
+        fn stake_token(ref self: ContractState, amount: u256) -> bool {
             true
-        }
-
-        fn cast_vote(ref self: ContractState, proposal_id: u256, decision: bool) -> bool {
-            true
-        }
-
-        fn register_proposal(ref self: ContractState, proposal_title: felt252) -> u256 {
-            1
         }
     }
 }
