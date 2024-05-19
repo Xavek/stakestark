@@ -67,7 +67,7 @@ pub mod Stake {
         fn stake_token(ref self: ContractState, amount: u256) {
             let current_amount = self
                 ._check_stark_balance(self.stake_token_address.read(), get_caller_address());
-            assert(current_amount > amount, 'ERROR');
+            assert(current_amount > amount, 'ERROR_INSUFFICIENT_FUNDS');
             self
                 ._stark_transfer(
                     self.stake_token_address.read(),
@@ -95,14 +95,14 @@ pub mod Stake {
 
         fn withdraw_token(ref self: ContractState, amount: u256) {
             let stake_details: StakeInfo = self.stake_info.read(get_caller_address());
-            assert(stake_details.is_stake, 'ERROR');
-            assert(get_block_timestamp() > stake_details.expiration_time, 'ERROR');
+            assert(stake_details.is_stake, 'ERROR_NOT_STAKED');
+            assert(get_block_timestamp() > stake_details.expiration_time, 'ERROR_EARLY');
             self._handle_withdraw(stake_details, get_caller_address());
         }
 
         fn stake_balanceOf(self: @ContractState, address: ContractAddress) -> u256 {
             let stake_details: StakeInfo = self.stake_info.read(get_caller_address());
-            assert(stake_details.is_stake, 'ERROR');
+            assert(stake_details.is_stake, 'ERROR_NOT_STAKED');
             stake_details.withdraw_amount
         }
     }
