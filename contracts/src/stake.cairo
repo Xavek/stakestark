@@ -3,6 +3,7 @@ use starknet::ContractAddress;
 pub trait IStake<TContractState> {
     fn stake_token(ref self: TContractState, amount: u256);
     fn withdraw_token(ref self: TContractState, amount: u256);
+    fn stake_balanceOf(self: @TContractState, address: ContractAddress) -> u256;
 }
 
 #[starknet::interface]
@@ -16,7 +17,6 @@ pub trait IERC20<TContractState> {
 
 #[starknet::contract]
 pub mod Stake {
-    use core::starknet::event::EventEmitter;
     use super::{IStake, ContractAddress, IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::{
         get_contract_address, get_caller_address, get_block_timestamp,
@@ -26,7 +26,6 @@ pub mod Stake {
     #[storage]
     struct Storage {
         stake_token_address: ContractAddress,
-        stake_record: LegacyMap::<ContractAddress, (u256, u64)>,
         stake_info: LegacyMap::<ContractAddress, StakeInfo>
     }
 
@@ -41,7 +40,6 @@ pub mod Stake {
 
     #[derive(starknet::Event, Drop)]
     pub struct Staked {
-        #[key]
         staker: ContractAddress,
         staked_amount: u256
     }
@@ -50,6 +48,13 @@ pub mod Stake {
     pub struct WithdrawStaked {
         staker: ContractAddress,
         withdraw_amount: u256
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        Staked: Staked,
+        WithdrawStaked: WithdrawStaked
     }
 
     #[constructor]
@@ -62,7 +67,7 @@ pub mod Stake {
         fn stake_token(ref self: ContractState, amount: u256) {
             let current_amount = self
                 ._check_stark_balance(self.stake_token_address.read(), get_caller_address());
-            assert(current_amount > amount, 'ERROR');
+            assert(current_amount > amount, 'ERROR_INSUFFICIENT_FUNDS');
             self
                 ._stark_transfer(
                     self.stake_token_address.read(),
@@ -70,7 +75,7 @@ pub mod Stake {
                     get_contract_address(),
                     amount
                 );
-            self.stake_record.write(get_caller_address(), (amount, get_block_timestamp()));
+
             let timestamp: u64 = get_block_timestamp();
             let expiration_time: u64 = self.calculate_time_cliff(timestamp);
             self
@@ -85,13 +90,20 @@ pub mod Stake {
                         expiration_time: expiration_time
                     }
                 );
+            self.emit(Staked { staker: get_caller_address(), staked_amount: amount });
         }
 
         fn withdraw_token(ref self: ContractState, amount: u256) {
             let stake_details: StakeInfo = self.stake_info.read(get_caller_address());
-            assert(stake_details.is_stake, 'ERROR');
-            assert(get_block_timestamp() > stake_details.expiration_time, 'ERROR');
+            assert(stake_details.is_stake, 'ERROR_NOT_STAKED');
+            assert(get_block_timestamp() > stake_details.expiration_time, 'ERROR_EARLY');
             self._handle_withdraw(stake_details, get_caller_address());
+        }
+
+        fn stake_balanceOf(self: @ContractState, address: ContractAddress) -> u256 {
+            let stake_details: StakeInfo = self.stake_info.read(get_caller_address());
+            assert(stake_details.is_stake, 'ERROR_NOT_STAKED');
+            stake_details.withdraw_amount
         }
     }
 
@@ -148,15 +160,7 @@ pub mod Stake {
                     user_address,
                     amount_u256
                 );
-        }
-
-        // todo for gradual release
-        fn calculate_withdraw_amount(withdraw_amount: u256, initial_amount: u256) -> u256 {
-            0
-        }
-
-        fn calculate_fee(amount: u256) -> u256 {
-            0
+            self.emit(WithdrawStaked { staker: user_address, withdraw_amount: amount_u256 })
         }
     }
 }
