@@ -25,7 +25,6 @@ pub mod Stake {
     #[storage]
     struct Storage {
         stake_token_address: ContractAddress,
-        stake_record: LegacyMap::<ContractAddress, (u256, u64)>,
         stake_info: LegacyMap::<ContractAddress, StakeInfo>
     }
 
@@ -75,7 +74,7 @@ pub mod Stake {
                     get_contract_address(),
                     amount
                 );
-            self.stake_record.write(get_caller_address(), (amount, get_block_timestamp()));
+
             let timestamp: u64 = get_block_timestamp();
             let expiration_time: u64 = self.calculate_time_cliff(timestamp);
             self
