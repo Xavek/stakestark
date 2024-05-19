@@ -3,6 +3,7 @@ use starknet::ContractAddress;
 pub trait IStake<TContractState> {
     fn stake_token(ref self: TContractState, amount: u256);
     fn withdraw_token(ref self: TContractState, amount: u256);
+    fn stake_balanceOf(self: @TContractState, address: ContractAddress) -> u256;
 }
 
 #[starknet::interface]
@@ -98,6 +99,12 @@ pub mod Stake {
             assert(get_block_timestamp() > stake_details.expiration_time, 'ERROR');
             self._handle_withdraw(stake_details, get_caller_address());
         }
+
+        fn stake_balanceOf(self: @ContractState, address: ContractAddress) -> u256 {
+            let stake_details: StakeInfo = self.stake_info.read(get_caller_address());
+            assert(stake_details.is_stake, 'ERROR');
+            stake_details.withdraw_amount
+        }
     }
 
     #[generate_trait]
@@ -154,15 +161,6 @@ pub mod Stake {
                     amount_u256
                 );
             self.emit(WithdrawStaked { staker: user_address, withdraw_amount: amount_u256 })
-        }
-
-        // todo for gradual release
-        fn calculate_withdraw_amount(withdraw_amount: u256, initial_amount: u256) -> u256 {
-            0
-        }
-
-        fn calculate_fee(amount: u256) -> u256 {
-            0
         }
     }
 }
