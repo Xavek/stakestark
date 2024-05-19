@@ -16,7 +16,6 @@ pub trait IERC20<TContractState> {
 
 #[starknet::contract]
 pub mod Stake {
-    use core::starknet::event::EventEmitter;
     use super::{IStake, ContractAddress, IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::{
         get_contract_address, get_caller_address, get_block_timestamp,
@@ -41,7 +40,6 @@ pub mod Stake {
 
     #[derive(starknet::Event, Drop)]
     pub struct Staked {
-        #[key]
         staker: ContractAddress,
         staked_amount: u256
     }
@@ -50,6 +48,13 @@ pub mod Stake {
     pub struct WithdrawStaked {
         staker: ContractAddress,
         withdraw_amount: u256
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        Staked: Staked,
+        WithdrawStaked: WithdrawStaked
     }
 
     #[constructor]
@@ -85,6 +90,7 @@ pub mod Stake {
                         expiration_time: expiration_time
                     }
                 );
+            self.emit(Staked { staker: get_caller_address(), staked_amount: amount });
         }
 
         fn withdraw_token(ref self: ContractState, amount: u256) {
@@ -148,6 +154,7 @@ pub mod Stake {
                     user_address,
                     amount_u256
                 );
+            self.emit(WithdrawStaked { staker: user_address, withdraw_amount: amount_u256 })
         }
 
         // todo for gradual release
