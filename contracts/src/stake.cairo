@@ -16,6 +16,7 @@ pub trait IERC20<TContractState> {
 
 #[starknet::contract]
 pub mod Stake {
+    use core::starknet::event::EventEmitter;
     use super::{IStake, ContractAddress, IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::{
         get_contract_address, get_caller_address, get_block_timestamp,
@@ -28,6 +29,7 @@ pub mod Stake {
         stake_record: LegacyMap::<ContractAddress, (u256, u64)>,
         stake_info: LegacyMap::<ContractAddress, StakeInfo>
     }
+
     #[derive(Drop, Serde, starknet::Store)]
     pub struct StakeInfo {
         amount: u256,
@@ -36,6 +38,20 @@ pub mod Stake {
         withdraw_amount: u256,
         expiration_time: u64
     }
+
+    #[derive(starknet::Event, Drop)]
+    pub struct Staked {
+        #[key]
+        staker: ContractAddress,
+        staked_amount: u256
+    }
+
+    #[derive(starknet::Event, Drop)]
+    pub struct WithdrawStaked {
+        staker: ContractAddress,
+        withdraw_amount: u256
+    }
+
     #[constructor]
     fn constructor(ref self: ContractState, stake_token_stark_addrs: ContractAddress) {
         self.stake_token_address.write(stake_token_stark_addrs)
@@ -68,7 +84,7 @@ pub mod Stake {
                         withdraw_amount: amount,
                         expiration_time: expiration_time
                     }
-                )
+                );
         }
 
         fn withdraw_token(ref self: ContractState, amount: u256) {
