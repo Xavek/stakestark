@@ -7,22 +7,11 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="bg-gray-300 p-4 flex justify-between">
+      <nav className="bg-black p-4 flex justify-between">
         <div className="flex items-center">
-          <span className="text-slate-400 text-xl font-bold">StakeStark</span>
+          <span className="text-white text-xl font-bold">StakeStark</span>
         </div>
         <div className="flex items-center ">
-          {/*
-          <button className="bg-white text-black px-6 py-2 mx-2 rounded-md">
-          UploadAndMint
-          </button>
-          <button className="bg-white text-black px-6 py-2 mx-2 rounded-md">
-            BuyNFT
-          </button>
-          <button className="bg-white text-black px-6 py-2 mx-2 rounded-md">
-            MY NFTS
-          </button>
-        */}
           <ul className="flex items-start">
             {status === "disconnected" &&
               connectors.map((connector) => (
