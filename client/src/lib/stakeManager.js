@@ -42,7 +42,14 @@ class StakeManager {
 
   async invokeContractFunction(account, functionName, contractCallData) {
     const contractWriteInstance = this.getContractWriteInstance(account);
-    return (await contractWriteInstance).invoke(functionName, contractCallData);
+    const response = (await contractWriteInstance).invoke(
+      functionName,
+      contractCallData,
+    );
+    await this.getProviderInstance().waitForTransaction(
+      (await response).transaction_hash,
+    );
+    return (await response).transaction_hash;
   }
 
   async readContractFunction(functionName, contractCallData) {
