@@ -1,4 +1,5 @@
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
+import { sliceAddressForView } from "./lib/utils";
 
 const Navbar = () => {
   const { connect, connectors } = useConnect();
@@ -30,7 +31,7 @@ const Navbar = () => {
                 className="bg-white text-black px-6 py-2 mx-2 rounded-md"
                 onClick={() => disconnect()}
               >
-                {address}
+                {sliceAddressForView(address)}
               </button>
             )}
           </ul>
