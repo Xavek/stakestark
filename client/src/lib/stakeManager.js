@@ -1,4 +1,4 @@
-import { RpcProvider } from "starknet";
+import { RpcProvider, Contract } from "starknet";
 import { DEPLOYED_CONTRACT_ADDRESS, NODE_URL_API } from "./utils";
 
 class StakeManager {
@@ -11,7 +11,7 @@ class StakeManager {
   }
 
   async getContractAbi() {
-    const abi = await this.getProviderRPCInstance().getClassAt(
+    const abi = await this.getProviderInstance().getClassAt(
       this.deployedAddress,
     );
     if (abi === undefined) {
@@ -25,7 +25,7 @@ class StakeManager {
     const contractInstance = new Contract(
       await this.getContractAbi(),
       this.deployedAddress,
-      this.getProviderRPCInstance(),
+      this.getProviderInstance(),
     );
     contractInstance.connect(account);
     return contractInstance;
@@ -35,7 +35,7 @@ class StakeManager {
     const contractReadInstance = new Contract(
       await this.getContractAbi(),
       this.deployedAddress,
-      this.getProviderRPCInstance(),
+      this.getProviderInstance(),
     );
     return contractReadInstance;
   }

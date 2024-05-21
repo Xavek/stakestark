@@ -1,6 +1,11 @@
 import React, { useState } from "react";
+import { useAccount } from "@starknet-react/core";
+import { withdrawAmount, stakeAmount } from "./lib/stakeApi";
+import { stakeManagerInstance } from "./lib/stakeManager";
+import { ethers } from "ethers";
 
 const TabComponent = () => {
+  const { account, status } = useAccount();
   const [activeTab, setActiveTab] = useState("stake");
   const [inputs, setInputs] = useState({
     stake: "",
@@ -14,13 +19,33 @@ const TabComponent = () => {
     }));
   };
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     console.log(inputs);
+    if (status === "disconnected") {
+      alert(`Wallet Not Connected. Connect First`);
+      throw Error("Wallet Not Connected");
+    }
+
+    await withdrawAmount(
+      stakeManagerInstance,
+      account,
+      ethers.parseEther(inputs.withdraw),
+    );
     setInputs({ withdraw: "" });
   };
 
-  const handleStake = () => {
+  const handleStake = async () => {
     console.log(inputs);
+    if (status === "disconnected") {
+      alert(`Wallet Not Connected. Connect First`);
+      throw Error("Wallet Not Connected");
+    }
+
+    await stakeAmount(
+      stakeManagerInstance,
+      account,
+      ethers.parseEther(inputs.stake),
+    );
     setInputs({ stake: "" });
   };
 
