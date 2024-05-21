@@ -26,7 +26,7 @@ pub mod Stake {
     #[storage]
     struct Storage {
         stake_token_address: ContractAddress,
-        stake_info: LegacyMap::<ContractAddress, StakeInfo>
+        stake_info: LegacyMap::<ContractAddress, StakeInfo>,
     }
 
     #[derive(Drop, Serde, starknet::Store)]
@@ -101,7 +101,7 @@ pub mod Stake {
         }
 
         fn stake_balanceOf(self: @ContractState, address: ContractAddress) -> u256 {
-            let stake_details: StakeInfo = self.stake_info.read(get_caller_address());
+            let stake_details: StakeInfo = self.stake_info.read(address);
             assert(stake_details.is_stake, 'ERROR_NOT_STAKED');
             stake_details.withdraw_amount
         }
@@ -133,7 +133,7 @@ pub mod Stake {
         }
 
         fn calculate_time_cliff(ref self: ContractState, entry_timestamp: u64) -> u64 {
-            let expirationTime: u64 = 48 * 3600;
+            let expirationTime: u64 = 3 * 3600;
             expirationTime + entry_timestamp
         }
 

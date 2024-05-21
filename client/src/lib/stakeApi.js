@@ -26,3 +26,20 @@ export const getStakedStarkAmount = async (StakeManagerInstance, address) => {
   );
   return contractResponse;
 };
+
+export const doERC20Approve = async (
+  StakeManagerInstance,
+  account,
+  amount,
+  ERC20ContractAddress,
+  spender,
+) => {
+  const contractInvokeData = [spender, amount];
+  const contractResponse =
+    await StakeManagerInstance.invokeERC20ApproveFunction(
+      account,
+      ERC20ContractAddress,
+      contractInvokeData,
+    );
+  console.log(contractResponse);
+};

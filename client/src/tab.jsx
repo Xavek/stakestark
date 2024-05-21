@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useAccount } from "@starknet-react/core";
-import { withdrawAmount, stakeAmount } from "./lib/stakeApi";
+import { withdrawAmount, stakeAmount, doERC20Approve } from "./lib/stakeApi";
 import { stakeManagerInstance } from "./lib/stakeManager";
 import { ethers } from "ethers";
+import { DEPLOYED_CONTRACT_ADDRESS, STRK_ADDRESS } from "./lib/utils";
 
 const TabComponent = () => {
   const { account, status } = useAccount();
@@ -41,6 +42,13 @@ const TabComponent = () => {
       throw Error("Wallet Not Connected");
     }
 
+    await doERC20Approve(
+      stakeManagerInstance,
+      account,
+      ethers.parseEther(inputs.stake),
+      STRK_ADDRESS,
+      DEPLOYED_CONTRACT_ADDRESS,
+    );
     await stakeAmount(
       stakeManagerInstance,
       account,

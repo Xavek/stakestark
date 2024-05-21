@@ -21,6 +21,22 @@ class StakeManager {
     return abi.abi;
   }
 
+  async getERC20ContractAbi(contractAddress) {
+    const { abi } =
+      await this.getProviderInstance().getClassAt(contractAddress);
+    return abi;
+  }
+
+  async getERC20ContractWriteInstance(account, contractAddress) {
+    const contractInstance = new Contract(
+      await this.getERC20ContractAbi(contractAddress),
+      contractAddress,
+      this.getProviderInstance(),
+    );
+    contractInstance.connect(account);
+    return contractInstance;
+  }
+
   async getContractWriteInstance(account) {
     const contractInstance = new Contract(
       await this.getContractAbi(),
@@ -57,6 +73,21 @@ class StakeManager {
     return (await contractReadInstance).call(functionName, contractCallData, {
       parseResponse: true,
     });
+  }
+
+  async invokeERC20ApproveFunction(account, contractAddress, contractCallData) {
+    const erc20ContractWriteInstance = this.getERC20ContractWriteInstance(
+      account,
+      contractAddress,
+    );
+    const response = (await erc20ContractWriteInstance).invoke(
+      "approve",
+      contractCallData,
+    );
+    await this.getProviderInstance().waitForTransaction(
+      (await response).transaction_hash,
+    );
+    return (await response).transaction_hash;
   }
 }
 
