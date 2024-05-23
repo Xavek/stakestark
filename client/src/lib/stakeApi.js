@@ -9,6 +9,7 @@ export const stakeAmount = async (StakeManagerInstance, account, amount) => {
 };
 
 export const withdrawAmount = async (StakeManagerInstance, account, amount) => {
+  console.log(amount);
   const contractInvokeData = [amount];
   const contractResponse = await StakeManagerInstance.invokeContractFunction(
     account,
@@ -25,4 +26,21 @@ export const getStakedStarkAmount = async (StakeManagerInstance, address) => {
     contractQueryData,
   );
   return contractResponse;
+};
+
+export const doERC20Approve = async (
+  StakeManagerInstance,
+  account,
+  amount,
+  ERC20ContractAddress,
+  spender,
+) => {
+  const contractInvokeData = [spender, amount];
+  const contractResponse =
+    await StakeManagerInstance.invokeERC20ApproveFunction(
+      account,
+      ERC20ContractAddress,
+      contractInvokeData,
+    );
+  console.log(contractResponse);
 };
