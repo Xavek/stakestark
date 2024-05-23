@@ -13,10 +13,12 @@ pub trait IERC20<TContractState> {
     fn transferFrom(
         ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
     ) -> bool;
+    fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
 }
 
 #[starknet::contract]
 pub mod Stake {
+    use core::starknet::event::EventEmitter;
     use super::{IStake, ContractAddress, IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::{
         get_contract_address, get_caller_address, get_block_timestamp,
@@ -27,6 +29,7 @@ pub mod Stake {
     struct Storage {
         stake_token_address: ContractAddress,
         stake_info: LegacyMap::<ContractAddress, StakeInfo>,
+        stake_time_in_hrs: u64
     }
 
     #[derive(Drop, Serde, starknet::Store)]
@@ -58,8 +61,11 @@ pub mod Stake {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, stake_token_stark_addrs: ContractAddress) {
-        self.stake_token_address.write(stake_token_stark_addrs)
+    fn constructor(
+        ref self: ContractState, stake_token_stark_addrs: ContractAddress, stake_cliff_in_hrs: u64
+    ) {
+        self.stake_token_address.write(stake_token_stark_addrs);
+        self.stake_time_in_hrs.write(stake_cliff_in_hrs)
     }
 
     #[abi(embed_v0)]
@@ -73,7 +79,8 @@ pub mod Stake {
                     self.stake_token_address.read(),
                     get_caller_address(),
                     get_contract_address(),
-                    amount
+                    amount,
+                    false
                 );
 
             let timestamp: u64 = get_block_timestamp();
@@ -97,7 +104,8 @@ pub mod Stake {
             let stake_details: StakeInfo = self.stake_info.read(get_caller_address());
             assert(stake_details.is_stake, 'ERROR_NOT_STAKED');
             assert(get_block_timestamp() > stake_details.expiration_time, 'ERROR_EARLY');
-            self._handle_withdraw(stake_details, get_caller_address());
+            assert(stake_details.withdraw_amount >= amount, 'ERROR_INVALID_WITHDRAW_AMOUNT');
+            self._handle_withdraw(stake_details, get_caller_address(), amount);
         }
 
         fn stake_balanceOf(self: @ContractState, address: ContractAddress) -> u256 {
@@ -124,43 +132,75 @@ pub mod Stake {
             stark_contract_address: ContractAddress,
             from: ContractAddress,
             to: ContractAddress,
-            amount: u256
+            amount: u256,
+            is_withdraw: bool
         ) {
-            let amount_u256: u256 = amount.into();
-            let transfer_return_flag = IERC20Dispatcher { contract_address: stark_contract_address }
-                .transferFrom(from, to, amount_u256);
-            assert(transfer_return_flag, 'STARK_TRANSFER_FAIL');
+            if (is_withdraw) {
+                let amount_u256: u256 = amount.into();
+                let transfer_flag = IERC20Dispatcher { contract_address: stark_contract_address }
+                    .transfer(to, amount_u256);
+                assert(transfer_flag, 'STARK_TO_TRANSFER_FAIL');
+            } else {
+                let amount_u256: u256 = amount.into();
+                let transfer_return_flag = IERC20Dispatcher {
+                    contract_address: stark_contract_address
+                }
+                    .transferFrom(from, to, amount_u256);
+                assert(transfer_return_flag, 'STARK_TRANSFER_FAIL');
+            }
         }
 
         fn calculate_time_cliff(ref self: ContractState, entry_timestamp: u64) -> u64 {
-            let expirationTime: u64 = 3 * 3600;
+            let expirationTime: u64 = self.stake_time_in_hrs.read() * 3600;
             expirationTime + entry_timestamp
         }
 
         fn _handle_withdraw(
-            ref self: ContractState, stake_details: StakeInfo, user_address: ContractAddress
+            ref self: ContractState,
+            stake_details: StakeInfo,
+            user_address: ContractAddress,
+            amount: u256
         ) {
-            let amount_u256: u256 = stake_details.withdraw_amount.into();
-            self
-                .stake_info
-                .write(
-                    user_address,
-                    StakeInfo {
-                        amount: 0,
-                        entry_time: 0,
-                        is_stake: false,
-                        withdraw_amount: 0,
-                        expiration_time: 0
-                    }
-                );
+            let mut amount_u256: u256 = 0;
+            if (amount == stake_details.withdraw_amount) {
+                self
+                    .stake_info
+                    .write(
+                        user_address,
+                        StakeInfo {
+                            amount: 0,
+                            entry_time: 0,
+                            is_stake: false,
+                            withdraw_amount: 0,
+                            expiration_time: 0
+                        }
+                    );
+                amount_u256 = stake_details.withdraw_amount;
+            } else {
+                self
+                    .stake_info
+                    .write(
+                        user_address,
+                        StakeInfo {
+                            amount: stake_details.amount,
+                            entry_time: stake_details.entry_time,
+                            is_stake: true,
+                            withdraw_amount: stake_details.withdraw_amount - amount,
+                            expiration_time: self.calculate_time_cliff(get_block_timestamp())
+                        }
+                    );
+                amount_u256 = stake_details.withdraw_amount - amount;
+            }
+
             self
                 ._stark_transfer(
                     self.stake_token_address.read(),
                     get_contract_address(),
                     user_address,
-                    amount_u256
+                    amount_u256,
+                    true
                 );
-            self.emit(WithdrawStaked { staker: user_address, withdraw_amount: amount_u256 })
+            self.emit(WithdrawStaked { staker: user_address, withdraw_amount: amount_u256 });
         }
     }
 }
