@@ -13,11 +13,17 @@ const Navbar = () => {
 
   async function fetchStakeBalance() {
     if (status === "connected") {
-      const stakeBalance = await getStakedStarkAmount(
-        stakeManagerInstance,
-        address,
-      );
-      setBalance(ethers.formatEther(stakeBalance));
+      try {
+        const stakeBalance = await getStakedStarkAmount(
+          stakeManagerInstance,
+          address,
+        );
+        setBalance(ethers.formatEther(stakeBalance));
+      } catch (error) {
+        console.log("Hello");
+        setBalance("0");
+        console.log(error);
+      }
     } else {
       setBalance("0");
     }
