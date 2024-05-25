@@ -20,7 +20,6 @@ const Navbar = () => {
         );
         setBalance(ethers.formatEther(stakeBalance));
       } catch (error) {
-        console.log("Hello");
         setBalance("0");
         console.log(error);
       }

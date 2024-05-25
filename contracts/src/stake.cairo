@@ -9,7 +9,6 @@ pub trait IStake<TContractState> {
 #[starknet::interface]
 pub trait IERC20<TContractState> {
     fn balanceOf(self: @TContractState, account: ContractAddress) -> u256;
-    fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
     fn transferFrom(
         ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
     ) -> bool;
