@@ -43,3 +43,20 @@ export const doERC20Approve = async (
     );
   console.log(contractResponse);
 };
+
+export const doAllowAndStake = async (
+  StakeManagerInstance,
+  account,
+  starkAddress,
+  DeployedAddress,
+  amount,
+) => {
+  const contractInvokeData = [DeployedAddress, amount];
+  const contractResponse = await StakeManagerInstance.doMulticalls(
+    account,
+    starkAddress,
+    DeployedAddress,
+    contractInvokeData,
+  );
+  console.log(contractResponse);
+};

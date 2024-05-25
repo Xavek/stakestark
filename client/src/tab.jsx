@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useAccount } from "@starknet-react/core";
-import { withdrawAmount, stakeAmount, doERC20Approve } from "./lib/stakeApi";
+import { withdrawAmount, doAllowAndStake } from "./lib/stakeApi";
 import { stakeManagerInstance } from "./lib/stakeManager";
-import { ethers } from "ethers";
 import { DEPLOYED_CONTRACT_ADDRESS, STRK_ADDRESS } from "./lib/utils";
+import { cairo } from "starknet";
 
 const TabComponent = () => {
   const { account, status } = useAccount();
@@ -29,7 +29,7 @@ const TabComponent = () => {
     await withdrawAmount(
       stakeManagerInstance,
       account,
-      ethers.parseEther(inputs.withdraw),
+      cairo.uint256(parseInt(inputs.withdraw)),
     );
     setInputs({ withdraw: "" });
   };
@@ -39,18 +39,12 @@ const TabComponent = () => {
       alert(`Wallet Not Connected. Connect First`);
       throw Error("Wallet Not Connected");
     }
-
-    await doERC20Approve(
+    await doAllowAndStake(
       stakeManagerInstance,
       account,
-      ethers.parseEther(inputs.stake),
       STRK_ADDRESS,
       DEPLOYED_CONTRACT_ADDRESS,
-    );
-    await stakeAmount(
-      stakeManagerInstance,
-      account,
-      ethers.parseEther(inputs.stake),
+      cairo.uint256(parseInt(inputs.stake)),
     );
     setInputs({ stake: "" });
   };
