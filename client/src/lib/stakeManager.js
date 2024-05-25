@@ -1,4 +1,4 @@
-import { RpcProvider, Contract } from "starknet";
+import { RpcProvider, Contract, CallData } from "starknet";
 import { DEPLOYED_CONTRACT_ADDRESS, NODE_URL_API } from "./utils";
 
 class StakeManager {
@@ -88,6 +88,32 @@ class StakeManager {
       (await response).transaction_hash,
     );
     return (await response).transaction_hash;
+  }
+
+  async doMulticalls(
+    account,
+    starkAddress,
+    ourContractAddress,
+    contractCallData,
+  ) {
+    const multicall = await account.execute([
+      {
+        contractAddress: starkAddress,
+        entrypoint: "approve",
+        calldata: CallData.compile({
+          spender: contractCallData[0],
+          amount: contractCallData[1],
+        }),
+      },
+      {
+        contractAddress: ourContractAddress,
+        entrypoint: "stake_token",
+        calldata: CallData.compile({ amount: contractCallData[1] }),
+      },
+    ]);
+    await this.getProviderInstance().waitForTransaction(
+      multicall.transaction_hash,
+    );
   }
 }
 
