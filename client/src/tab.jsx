@@ -21,7 +21,6 @@ const TabComponent = () => {
   };
 
   const handleWithdraw = async () => {
-    console.log(inputs);
     if (status === "disconnected") {
       alert(`Wallet Not Connected. Connect First`);
       throw Error("Wallet Not Connected");
@@ -36,7 +35,6 @@ const TabComponent = () => {
   };
 
   const handleStake = async () => {
-    console.log(inputs);
     if (status === "disconnected") {
       alert(`Wallet Not Connected. Connect First`);
       throw Error("Wallet Not Connected");

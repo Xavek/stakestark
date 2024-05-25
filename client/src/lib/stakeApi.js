@@ -9,7 +9,6 @@ export const stakeAmount = async (StakeManagerInstance, account, amount) => {
 };
 
 export const withdrawAmount = async (StakeManagerInstance, account, amount) => {
-  console.log(amount);
   const contractInvokeData = [amount];
   const contractResponse = await StakeManagerInstance.invokeContractFunction(
     account,
