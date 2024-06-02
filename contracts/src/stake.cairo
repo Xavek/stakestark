@@ -84,15 +84,16 @@ pub mod Stake {
 
             let timestamp: u64 = get_block_timestamp();
             let expiration_time: u64 = self.calculate_time_cliff(timestamp);
+            let already_staked_amount = self.stake_balanceOf(get_caller_address());
             self
                 .stake_info
                 .write(
                     get_caller_address(),
                     StakeInfo {
-                        amount: amount,
+                        amount: amount + already_staked_amount,
                         entry_time: timestamp,
                         is_stake: true,
-                        withdraw_amount: amount,
+                        withdraw_amount: amount + already_staked_amount,
                         expiration_time: expiration_time
                     }
                 );
@@ -109,7 +110,6 @@ pub mod Stake {
 
         fn stake_balanceOf(self: @ContractState, address: ContractAddress) -> u256 {
             let stake_details: StakeInfo = self.stake_info.read(address);
-            assert(stake_details.is_stake, 'ERROR_NOT_STAKED');
             stake_details.withdraw_amount
         }
     }
