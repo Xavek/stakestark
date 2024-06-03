@@ -25,4 +25,4 @@ Requires [pnpm](https://pnpm.io/installation) on machine.
 - `pnpm dev` and visit the relevant local host for interaction
   - Edit the `utils.js` with your deployed address to interact with your contract
 
-#### Deployed Address(Sepolia): 0x04d0764423f662fd912b48f5d70d808904fb1da137418d615a978deb3505fdf2
+Contract Address(Sepolia): 0x05ce9ccbbfdd7811d7c5e4b88e420f7a13c53774e244052dc5256df4b73b2502 or [Contract](https://sepolia.starkscan.co/contract/0x05ce9ccbbfdd7811d7c5e4b88e420f7a13c53774e244052dc5256df4b73b2502#overview)
